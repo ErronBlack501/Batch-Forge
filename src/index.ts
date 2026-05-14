@@ -1,15 +1,40 @@
-import fastify from "fastify";
+import { createApp } from "./app.js";
+import { env } from "./utils/env.js";
+import { logger } from "./utils/logger.js";
+import DocumentWorker from "./workers/pdf.worker.js";
 
-const server = fastify();
+async function start() {
+  try {
+    logger.info(`Starting BatchForge API in ${env.NODE_ENV} mode`);
 
-server.get("/ping", async () => {
-  return "pong\n";
-});
+    // Create and start the Fastify app
+    const fastify = await createApp();
 
-server.listen({ port: 8080 }, (err, address) => {
-  if (err) {
-    console.error(err);
+    // Start the worker
+    const worker = new DocumentWorker();
+    await worker.start();
+
+    // Start server
+    await fastify.listen({ port: env.PORT, host: "0.0.0.0" });
+
+    logger.info(`🚀 Server running at http://0.0.0.0:${env.PORT}`);
+    logger.info(`📘 Documentation at http://0.0.0.0:${env.PORT}/documentation`);
+    logger.info(`📊 Metrics at http://0.0.0.0:${env.PORT}/metrics`);
+
+    // Graceful shutdown
+    const signals = ["SIGINT", "SIGTERM"];
+    for (const signal of signals) {
+      process.on(signal, async () => {
+        logger.info(`${signal} received, gracefully shutting down...`);
+        await fastify.close();
+        await worker.stop();
+        process.exit(0);
+      });
+    }
+  } catch (err) {
+    logger.error({ error: err }, "Failed to start server");
     process.exit(1);
   }
-  console.log(`Server listening at ${address}`);
-});
+}
+
+start();
