@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 
 import { Queue } from "bullmq";
 import fp from "fastify-plugin";

@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance }  from "fastify";
 import type { Db } from "mongodb";
 import { MongoClient } from "mongodb";
 

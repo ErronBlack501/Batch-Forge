@@ -1,0 +1,157 @@
+## 🧪 Test 24h – Développeur Backend Fastify (Node.js/TypeScript)
+
+### 🎯 Objectif
+
+Construire une API backend **ultra-optimisée, scalable et documentée**, capable de traiter des **lots de 1000 documents PDF en parallèle**, avec gestion de la concurrence, résilience et observabilité.
+
+---
+
+## 📌 Contexte
+
+Vous devez développer un service de génération de documents (CERFA, conventions, contrats) qui traite des lots massifs de demandes de génération PDF de manière asynchrone, fiable et performante.
+
+---
+
+## 🧩 Consignes
+
+# 1. API Core (8h)
+
+### ⚙️ Stack obligatoire
+
+* Fastify + TypeScript
+* BullMQ + Redis (queue)
+* MongoDB + GridFS (stockage PDF)
+* Worker Threads (génération PDF)
+* Docker Compose
+
+---
+
+### 📡 Endpoints
+
+#### POST `/api/documents/batch`
+
+* Reçoit un tableau de `userIds` (jusqu’à 1000)
+* Crée un batch de traitement
+* Lance la génération asynchrone via queue
+* Retourne un `batchId`
+
+---
+
+#### GET `/api/documents/batch/:batchId`
+
+* Retourne le statut du batch :
+
+  * pending
+  * processing
+  * completed
+  * failed
+
+* Inclut :
+
+  * progression (total, done, failed)
+  * liste des documents générés
+
+---
+
+#### GET `/api/documents/:documentId`
+
+* Retourne le PDF généré
+* Streaming depuis GridFS
+
+---
+
+#### GET `/health`
+
+* Vérifie :
+
+  * MongoDB
+  * Redis
+  * Queue
+
+---
+
+#### GET `/metrics`
+
+* Expose métriques Prometheus
+
+---
+
+# 2. Performances (6h)
+
+* Traitement parallèle des documents (queue + workers)
+* Worker Threads pour génération PDF
+* Mise en cache des templates PDF
+* Streaming des PDFs (pas de chargement mémoire complet)
+
+### 📊 Benchmark
+
+* Script de test batch 1000 documents
+* Mesurer :
+
+  * temps total
+  * CPU
+  * mémoire
+  * documents/seconde
+* Fournir un rapport
+
+---
+
+# 3. Résilience (4h)
+
+* Retry automatique (3 tentatives, backoff exponentiel)
+* Circuit breaker pour appels externes simulés
+* Health checks complets
+* Graceful shutdown (SIGTERM)
+* Gestion des cas extrêmes :
+
+  * MongoDB down
+  * Redis down (fallback mémoire)
+  * timeout génération PDF (5s max)
+
+---
+
+# 4. Observabilité (4h)
+
+* Logs structurés JSON (corrélation batchId / documentId)
+* Métriques Prometheus :
+
+  * documents_generated_total
+  * batch_processing_duration_seconds
+  * queue_size
+* Endpoint `/metrics`
+* Dashboard simple (Grafana ou équivalent)
+
+---
+
+# 5. Documentation (2h)
+
+* Swagger / OpenAPI complet
+* README contenant :
+
+  * architecture système (diagramme batch processing)
+  * choix techniques (Fastify, BullMQ, GridFS, workers)
+  * instructions Docker Compose
+
+---
+
+## 📦 Livrables
+
+* Repository GitHub propre
+* `docker-compose.yml` (API + Redis + MongoDB)
+* Script de benchmark + rapport
+* Collection Postman ou curl examples
+* API déployée (Render / autre)
+
+---
+
+## 🧪 Critères d’évaluation
+
+1. Fonctionnalité complète
+2. Architecture scalable et propre
+3. Performance sous charge
+4. Résilience et gestion d’erreurs
+5. Qualité du code (TypeScript strict, structure)
+6. Observabilité (logs + metrics)
+7. Documentation claire
+8. Sécurité (validation, rate limiting, secrets)
+9. Délivrabilité (docker-compose up fonctionnel)

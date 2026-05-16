@@ -1,6 +1,5 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createClient } from "redis";
-
 import fp from "fastify-plugin";
 import { logger } from "../utils/logger.js";
 
@@ -29,11 +28,11 @@ export default fp(async (fastify: FastifyInstance) => {
   await redisClient.connect();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fastify.decorate("redis", redisClient as any);
+  fastify.decorate("redis", redisClient);
   globalThis.redis = redisClient;
 
   fastify.addHook("onClose", async () => {
-    await redisClient.disconnect();
+    await redisClient.destroy();
     logger.info("Redis Client Disconnected");
   });
 });

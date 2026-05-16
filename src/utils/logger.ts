@@ -17,18 +17,6 @@ export const logger = pino({
           },
         }
       : undefined,
-  serializers: {
-    req: (request) => ({
-      id: request.id,
-      method: request.method,
-      url: request.url,
-      remoteAddress: request.ip,
-      userAgent: request.headers["user-agent"],
-    }),
-    res: (response) => ({
-      statusCode: response.statusCode,
-    }),
-  },
 });
 
 export default logger;
