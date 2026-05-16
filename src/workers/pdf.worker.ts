@@ -1,12 +1,17 @@
+import type { DocumentJobData } from "../jobs/document.job.js";
+
 import { Worker } from "bullmq";
 import { MongoClient } from "mongodb";
-import { env } from "../utils/env.js";
+
+import { getEnv } from "../utils/env.js";
 import { logger } from "../utils/logger.js";
-import { processDocumentJob, DocumentJobData } from "../jobs/document.job.js";
+import { processDocumentJob } from "../jobs/document.job.js";
+
+const env = getEnv();
 
 const redisConnection = {
   host: new URL(env.REDIS_URL).hostname || "localhost",
-  port: parseInt(new URL(env.REDIS_URL).port || "6379"),
+  port: Number.parseInt(new URL(env.REDIS_URL).port || "6379", 10),
 };
 
 export class DocumentWorker {

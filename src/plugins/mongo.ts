@@ -1,7 +1,8 @@
 import { FastifyInstance } from "fastify";
+import type { Db } from "mongodb";
+import { MongoClient } from "mongodb";
+
 import fp from "fastify-plugin";
-import { MongoClient, Db } from "mongodb";
-import { env } from "../utils/env.js";
 import { logger } from "../utils/logger.js";
 
 declare global {
@@ -14,10 +15,12 @@ declare global {
 let mongoClient: MongoClient;
 
 export default fp(async (fastify: FastifyInstance) => {
-  mongoClient = new MongoClient(env.MONGODB_URI);
+  const { MONGODB_URI, MONGODB_DB } = fastify.config;
+
+  mongoClient = new MongoClient(MONGODB_URI);
 
   await mongoClient.connect();
-  const db = mongoClient.db(env.MONGODB_DB);
+  const db = mongoClient.db(MONGODB_DB);
 
   // Verify connection
   await db.admin().ping();

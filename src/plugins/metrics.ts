@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
-import fp from "fastify-plugin";
 import * as promClient from "prom-client";
+
+import fp from "fastify-plugin";
 import { logger } from "../utils/logger.js";
 
 export const metricsRegistry = new promClient.Registry();
@@ -37,7 +38,7 @@ export const documentGenerationErrors = new promClient.Counter({
 export default fp(async (fastify: FastifyInstance) => {
   logger.info("Prometheus metrics initialized");
 
-  fastify.get("/metrics", async (request, reply) => {
+  fastify.get("/metrics", async (_request, reply) => {
     reply.type("text/plain");
     return metricsRegistry.metrics();
   });

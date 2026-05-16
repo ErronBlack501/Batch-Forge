@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
-import fp from "fastify-plugin";
 import { createClient } from "redis";
-import { env } from "../utils/env.js";
+
+import fp from "fastify-plugin";
 import { logger } from "../utils/logger.js";
 
 declare global {
@@ -12,8 +12,10 @@ declare global {
 }
 
 export default fp(async (fastify: FastifyInstance) => {
+  const { REDIS_URL } = fastify.config;
+
   const redisClient = createClient({
-    url: env.REDIS_URL,
+    url: REDIS_URL,
   });
 
   redisClient.on("error", (err) => {
@@ -26,7 +28,8 @@ export default fp(async (fastify: FastifyInstance) => {
 
   await redisClient.connect();
 
-  fastify.decorate("redis", redisClient);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fastify.decorate("redis", redisClient as any);
   globalThis.redis = redisClient;
 
   fastify.addHook("onClose", async () => {

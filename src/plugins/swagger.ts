@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
-import fp from "fastify-plugin";
 import fastifySwagger from "@fastify/swagger";
+
+import fp from "fastify-plugin";
 import { logger } from "../utils/logger.js";
 
 export default fp(async (fastify: FastifyInstance) => {

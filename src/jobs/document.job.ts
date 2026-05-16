@@ -1,12 +1,13 @@
-import { Job } from "bullmq";
-import { Db } from "mongodb";
-import { logger } from "../utils/logger.js";
-import { PdfGenerator } from "../utils/pdfGenerator.js";
+import type { Job } from "bullmq";
+import type { Db } from "mongodb";
+
 import {
   batchProcessingDuration,
-  documentsGenerated,
   documentGenerationErrors,
+  documentsGenerated,
 } from "../plugins/metrics.js";
+import { logger } from "../utils/logger.js";
+import { PdfGenerator } from "../utils/pdfGenerator.js";
 
 export interface DocumentJobData {
   userId: string;

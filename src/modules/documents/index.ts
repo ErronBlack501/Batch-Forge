@@ -1,5 +1,6 @@
-import { FastifyInstance } from "fastify";
-import { Db, ObjectId } from "mongodb";
+import type { FastifyInstance } from "fastify";
+import type { Db, ObjectId } from "mongodb";
+
 import { logger } from "../../utils/logger.js";
 
 export interface DocumentData {

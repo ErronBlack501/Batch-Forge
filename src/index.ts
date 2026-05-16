@@ -1,10 +1,11 @@
 import { createApp } from "./app.js";
-import { env } from "./utils/env.js";
+import { getEnv } from "./utils/env.js";
 import { logger } from "./utils/logger.js";
 import DocumentWorker from "./workers/pdf.worker.js";
 
 async function start() {
   try {
+    const env = getEnv();
     logger.info(`Starting BatchForge API in ${env.NODE_ENV} mode`);
 
     // Create and start the Fastify app

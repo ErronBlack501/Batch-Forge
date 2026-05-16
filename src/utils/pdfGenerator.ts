@@ -8,8 +8,6 @@ export interface PdfGenerationOptions {
 }
 
 export class PdfGenerator {
-  constructor() {}
-
   async generate(options: PdfGenerationOptions): Promise<Buffer> {
     const { userId, batchId, documentId, timeout = 30000 } = options;
 
@@ -32,7 +30,7 @@ export class PdfGenerator {
     }
   }
 
-  private simulatePdfGeneration(timeout: number): Promise<Buffer> {
+  private simulatePdfGeneration(_timeout: number): Promise<Buffer> {
     return new Promise((resolve) => {
       // Simulate PDF generation
       setTimeout(

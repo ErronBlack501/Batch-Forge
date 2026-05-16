@@ -1,14 +1,48 @@
-import "dotenv/config";
+import { z } from "zod";
 
-export const env = {
-  NODE_ENV: process.env.NODE_ENV || "development",
-  LOG_LEVEL: process.env.LOG_LEVEL || "info",
-  REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
-  MONGODB_URI:
-    process.env.MONGODB_URI || "mongodb://localhost:27017/batch-forge",
-  MONGODB_DB: process.env.MONGODB_DB || "batch-forge",
-  PORT: parseInt(process.env.PORT || "3000", 10),
-  CONCURRENCY: parseInt(process.env.CONCURRENCY || "5", 10),
-  MAX_RETRIES: parseInt(process.env.MAX_RETRIES || "3", 10),
-  RETRY_BACKOFF: parseInt(process.env.RETRY_BACKOFF || "2000", 10),
-};
+export const envSchema = z.object({
+  CONCURRENCY: z.coerce.number().int().positive().default(5),
+  LOG_LEVEL: z
+    .enum(["fatal", "error", "warn", "info", "debug", "trace"])
+    .default("info"),
+  MAX_RETRIES: z.coerce.number().int().nonnegative().default(3),
+  MONGODB_DB: z.string().default("batch-forge"),
+  MONGODB_URI: z.string().default("mongodb://localhost:27017/batch-forge"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  PORT: z.coerce.number().int().positive().default(3000),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
+  RETRY_BACKOFF: z.coerce.number().int().positive().default(2000),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+// Helper to get env from fastify instance or fallback to process.env
+export function getEnv(fastify?: { config?: Env }): Env {
+  if (fastify?.config) {
+    return fastify.config;
+  }
+  // Fallback for cases where fastify is not available yet (e.g., logger initialization)
+  return envSchema.parse(process.env);
+}
+
+// Export zod schema as JSON schema for @fastify/env compatibility
+export const envJsonSchema = {
+  type: "object",
+  required: [],
+  properties: {
+    CONCURRENCY: { type: "number", default: 5 },
+    LOG_LEVEL: { type: "string", default: "info" },
+    MAX_RETRIES: { type: "number", default: 3 },
+    MONGODB_DB: { type: "string", default: "batch-forge" },
+    MONGODB_URI: {
+      type: "string",
+      default: "mongodb://localhost:27017/batch-forge",
+    },
+    NODE_ENV: { type: "string", default: "development" },
+    PORT: { type: "number", default: 3000 },
+    REDIS_URL: { type: "string", default: "redis://localhost:6379" },
+    RETRY_BACKOFF: { type: "number", default: 2000 },
+  },
+} as const;

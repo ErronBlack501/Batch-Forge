@@ -1,10 +1,12 @@
 import { FastifyInstance } from "fastify";
 import { Db } from "mongodb";
 
+import type { RedisClientType } from "redis";
+
 export async function healthRoutes(
   fastify: FastifyInstance,
   db: Db,
-  redis: any,
+  redis: RedisClientType,
 ) {
   fastify.get("/health", async (request, reply) => {
     const health = {
@@ -21,7 +23,7 @@ export async function healthRoutes(
       // Check MongoDB
       await db.admin().ping();
       health.checks.mongodb = "ok";
-    } catch (error) {
+    } catch (_error) {
       health.checks.mongodb = "error";
       health.status = "degraded";
     }
@@ -30,7 +32,7 @@ export async function healthRoutes(
       // Check Redis
       await redis.ping();
       health.checks.redis = "ok";
-    } catch (error) {
+    } catch (_error) {
       health.checks.redis = "error";
       health.status = "degraded";
     }

@@ -1,6 +1,7 @@
-import { FastifyInstance } from "fastify";
-import { Db, ObjectId } from "mongodb";
-import { Queue } from "bullmq";
+import type { FastifyInstance } from "fastify";
+import type { Db, ObjectId } from "mongodb";
+import type { Queue } from "bullmq";
+
 import { logger } from "../../utils/logger.js";
 
 export interface BatchRequest {
@@ -28,8 +29,8 @@ export async function batchRoutes(
   // Create batch
   fastify.post<{ Body: BatchRequest }>(
     "/api/documents/batch",
-    async (request, reply) => {
-      const { userIds } = request.body;
+    async (_request, reply) => {
+      const { userIds } = _request.body;
 
       if (!Array.isArray(userIds) || userIds.length === 0) {
         return reply
