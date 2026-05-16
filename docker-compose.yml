@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   api:
     build:
@@ -48,7 +46,11 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=batch-forge
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test:
+        [
+          "CMD-SHELL",
+          "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -58,6 +60,38 @@ services:
       - mongo_data:/data/db
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:main-distroless
+    container_name: batch-forge-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - api
+    networks:
+      - batch-forge-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: batch-forge-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - batch-forge-net
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
 networks:
   batch-forge-net:
     driver: bridge
@@ -65,3 +99,5 @@ networks:
 volumes:
   redis_data:
   mongo_data:
+  prometheus_data:
+  grafana_data:
