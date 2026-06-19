@@ -1,38 +1,14 @@
-import type { FastifyInstance } from "fastify";
-import { createClient } from "redis";
-import fp from "fastify-plugin";
-import { logger } from "../utils/logger.js";
+import fastifyRedis from '@fastify/redis'
+import type { FastifyPluginAsync } from 'fastify'
+import fp from 'fastify-plugin'
+import type { Env } from '../utils/env.js'
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace globalThis {
-    var redis: ReturnType<typeof createClient> | undefined;
-  }
+const redisPlugin: FastifyPluginAsync<Env> = async (fastify, options) => {
+  await fastify.register(fastifyRedis, {
+    url: options.REDIS_URL,
+  })
 }
 
-export default fp(async (fastify: FastifyInstance) => {
-  const { REDIS_URL } = fastify.config;
-
-  const redisClient = createClient({
-    url: REDIS_URL,
-  });
-
-  redisClient.on("error", (err) => {
-    logger.error({ error: err }, "Redis Client Error");
-  });
-
-  redisClient.on("connect", () => {
-    logger.info("Redis Client Connected");
-  });
-
-  await redisClient.connect();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fastify.decorate("redis", redisClient);
-  globalThis.redis = redisClient;
-
-  fastify.addHook("onClose", async () => {
-    await redisClient.destroy();
-    logger.info("Redis Client Disconnected");
-  });
-});
+export default fp(redisPlugin, {
+  name: 'redis',
+})

@@ -1,39 +1,37 @@
-import type { FastifyInstance } from "fastify";
+import { Queue } from 'bullmq'
+import type { FastifyPluginAsync } from 'fastify'
+import fp from 'fastify-plugin'
+import type { Env } from '../utils/env.js'
 
-import { Queue } from "bullmq";
-import fp from "fastify-plugin";
-import { logger } from "../utils/logger.js";
+declare module 'fastify' {
+  interface FastifyInstance {
+    documentQueue: Queue
+  }
+}
 
-let documentQueue: Queue;
-
-export default fp(async (fastify: FastifyInstance) => {
-  const { MAX_RETRIES, REDIS_URL, RETRY_BACKOFF } = fastify.config;
-
-  const redisConnection = {
-    host: new URL(REDIS_URL).hostname || "localhost",
-    port: Number.parseInt(new URL(REDIS_URL).port || "6379", 10),
-  };
-
-  documentQueue = new Queue("documents", {
-    connection: redisConnection,
+const queuePlugin: FastifyPluginAsync<Env> = async (fastify, options) => {
+  const documentQueue = new Queue('documents', {
+    connection: {
+      url: options.REDIS_URL,
+    },
     defaultJobOptions: {
-      attempts: MAX_RETRIES,
+      attempts: options.MAX_RETRIES,
       backoff: {
-        type: "exponential",
-        delay: RETRY_BACKOFF,
+        type: 'exponential',
+        delay: options.RETRY_BACKOFF,
       },
       removeOnComplete: true,
+      removeOnFail: false,
     },
-  });
+  })
 
-  logger.info("BullMQ Queue initialized");
+  fastify.decorate('documentQueue', documentQueue)
 
-  fastify.decorate("queue", documentQueue);
+  fastify.addHook('onClose', async () => {
+    await documentQueue.close()
+  })
+}
 
-  fastify.addHook("onClose", async () => {
-    await documentQueue.close();
-    logger.info("BullMQ Queue Closed");
-  });
-});
-
-export { documentQueue };
+export default fp(queuePlugin, {
+  name: 'queue',
+})

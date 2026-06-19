@@ -1,209 +1,65 @@
 import PDFDocument from "pdfkit";
-import { Readable } from "stream";
 
-export interface PDFTemplateData {
-  title: string;
-  subtitle?: string;
-  content: {
-    section: string;
-    text: string;
-  }[];
-  footer?: string;
-  metadata?: {
-    author?: string;
-    subject?: string;
-    creator?: string;
-  };
-}
+// create a document and pipe to a blob
+var doc = new PDFDocument();
+// draw some text
+doc.fontSize(25).text("Here is some vector graphics...", 100, 80);
 
-/**
- * Generates a PDF document with dynamic content
- * Returns a readable stream for efficient memory usage
- */
-export function generatePDFTemplate(data: PDFTemplateData): Readable {
-  const doc = new PDFDocument({
-    margin: 50,
-    bufferPages: true,
+// some vector graphics
+doc.save().moveTo(100, 150).lineTo(100, 250).lineTo(200, 250).fill("#FF3300");
+
+doc.circle(280, 200, 50).fill("#6600FF");
+
+// an SVG path
+doc
+  .scale(0.6)
+  .translate(470, 130)
+  .path("M 250,75 L 323,301 131,161 369,161 177,301 z")
+  .fill("red", "even-odd")
+  .restore();
+
+doc.save();
+// a gradient fill
+var gradient = doc
+  .linearGradient(100, 300, 200, 300)
+  .stop(0, "green")
+  .stop(0.5, "red")
+  .stop(1, "green");
+doc.rect(100, 300, 100, 100).fill(gradient);
+
+// stroke & fill uncolored tiling pattern
+
+var stripe45d = doc.pattern(
+  [1, 1, 4, 4],
+  3,
+  3,
+  "1 w 0 1 m 4 5 l s 2 0 m 5 3 l s",
+);
+doc.circle(280, 350, 50).fill([stripe45d, "blue"]);
+
+doc
+  .rect(380, 300, 100, 100)
+  .fillColor("lime")
+  .strokeColor([stripe45d, "orange"])
+  .lineWidth(5)
+  .fillAndStroke();
+doc.restore();
+
+// and some justified text wrapped into columns
+const lorem =
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum. Cras venenatis euismod malesuada.";
+doc
+  .text("And here is some wrapped text...", 100, 450)
+  .font("Times-Roman", 13)
+  .moveDown()
+  .text(lorem, {
+    width: 412,
+    align: "justify",
+    indent: 30,
+    columns: 2,
+    height: 300,
+    ellipsis: true,
   });
 
-  // Set PDF metadata
-  if (data.metadata) {
-    if (data.metadata.author) doc.author(data.metadata.author);
-    if (data.metadata.subject) doc.subject(data.metadata.subject);
-    if (data.metadata.creator) doc.creator(data.metadata.creator);
-  }
-
-  // Title
-  doc.fontSize(24).font("Helvetica-Bold").text(data.title, { align: "center" });
-
-  // Subtitle (optional)
-  if (data.subtitle) {
-    doc
-      .fontSize(14)
-      .font("Helvetica")
-      .fillColor("#666666")
-      .text(data.subtitle, { align: "center" });
-  }
-
-  // Add some spacing
-  doc.moveDown(1);
-
-  // Horizontal line
-  doc
-    .strokeColor("#000000")
-    .lineWidth(1)
-    .moveTo(50, doc.y)
-    .lineTo(550, doc.y)
-    .stroke();
-
-  doc.moveDown(0.5);
-
-  // Content sections
-  data.content.forEach((item) => {
-    // Section header
-    doc
-      .fontSize(12)
-      .font("Helvetica-Bold")
-      .fillColor("#000000")
-      .text(item.section);
-
-    // Section content
-    doc.fontSize(10).font("Helvetica").fillColor("#333333").text(item.text, {
-      align: "left",
-      width: 500,
-    });
-
-    doc.moveDown(0.5);
-  });
-
-  // Footer with page numbers
-  const pages = doc.bufferedPageRange().count;
-  for (let i = 0; i < pages; i++) {
-    doc.switchToPage(i);
-
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor("#999999")
-      .text(
-        data.footer || `Generated on ${new Date().toLocaleDateString()}`,
-        50,
-        doc.page.height - 30,
-        { align: "center" },
-      );
-
-    // Page number
-    doc.text(`Page ${i + 1} of ${pages}`, 500, doc.page.height - 30, {
-      align: "right",
-    });
-  }
-
-  // End the PDF
-  doc.end();
-
-  return doc;
-}
-
-/**
- * Generates a PDF and returns it as a Buffer
- * Use this when you need the complete PDF in memory
- */
-export async function generatePDFBuffer(
-  data: PDFTemplateData,
-): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      margin: 50,
-      bufferPages: true,
-    });
-
-    const chunks: Buffer[] = [];
-
-    doc.on("data", (chunk: Buffer) => {
-      chunks.push(chunk);
-    });
-
-    doc.on("end", () => {
-      resolve(Buffer.concat(chunks));
-    });
-
-    doc.on("error", reject);
-
-    // Set PDF metadata
-    if (data.metadata) {
-      if (data.metadata.author) doc.author(data.metadata.author);
-      if (data.metadata.subject) doc.subject(data.metadata.subject);
-      if (data.metadata.creator) doc.creator(data.metadata.creator);
-    }
-
-    // Title
-    doc
-      .fontSize(24)
-      .font("Helvetica-Bold")
-      .text(data.title, { align: "center" });
-
-    // Subtitle (optional)
-    if (data.subtitle) {
-      doc
-        .fontSize(14)
-        .font("Helvetica")
-        .fillColor("#666666")
-        .text(data.subtitle, { align: "center" });
-    }
-
-    // Add some spacing
-    doc.moveDown(1);
-
-    // Horizontal line
-    doc
-      .strokeColor("#000000")
-      .lineWidth(1)
-      .moveTo(50, doc.y)
-      .lineTo(550, doc.y)
-      .stroke();
-
-    doc.moveDown(0.5);
-
-    // Content sections
-    data.content.forEach((item) => {
-      // Section header
-      doc
-        .fontSize(12)
-        .font("Helvetica-Bold")
-        .fillColor("#000000")
-        .text(item.section);
-
-      // Section content
-      doc.fontSize(10).font("Helvetica").fillColor("#333333").text(item.text, {
-        align: "left",
-        width: 500,
-      });
-
-      doc.moveDown(0.5);
-    });
-
-    // Footer with page numbers
-    const pages = doc.bufferedPageRange().count;
-    for (let i = 0; i < pages; i++) {
-      doc.switchToPage(i);
-
-      doc
-        .fontSize(8)
-        .font("Helvetica")
-        .fillColor("#999999")
-        .text(
-          data.footer || `Generated on ${new Date().toLocaleDateString()}`,
-          50,
-          doc.page.height - 30,
-          { align: "center" },
-        );
-
-      // Page number
-      doc.text(`Page ${i + 1} of ${pages}`, 500, doc.page.height - 30, {
-        align: "right",
-      });
-    }
-
-    doc.end();
-  });
-}
+// end and display the document in the iframe to the right
+doc.end();

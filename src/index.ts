@@ -10,10 +10,15 @@ async function start() {
     // Create and start the Fastify app
     const fastify = await createApp();
 
+    // Important: call ready() to ensure all plugins are initialized before starting server
+    await fastify.ready();
+
     // Start server
     await fastify.listen({ port: env.PORT, host: "0.0.0.0" });
 
-    logger.info(`🚀 Server running at http://0.0.0.0:${env.PORT}`);
+    logger.info(`Server running at http://0.0.0.0:${env.PORT}`);
+    logger.info(`Swagger UI: http://0.0.0.0:${env.PORT}/docs`);
+    logger.info(`Bull Board: http://0.0.0.0:${env.PORT}/ui`);
 
     // Graceful shutdown
     const signals = ["SIGINT", "SIGTERM"];
@@ -26,6 +31,10 @@ async function start() {
     }
   } catch (err) {
     logger.error({ error: err }, "Failed to start server");
+    // Also print the raw error and stack to aid debugging when logger serializes empty objects
+    // eslint-disable-next-line no-console
+    console.error("Startup error:", err);
+    if (err && (err as any).stack) console.error((err as any).stack);
     process.exit(1);
   }
 }

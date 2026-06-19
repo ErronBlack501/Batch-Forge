@@ -1,9 +1,8 @@
 import type { FastifyInstance } from "fastify";
 
-export async function documentRoutes(fastify: FastifyInstance) {
-  // POST batch generation
+export default async function documentRoutes(fastify: FastifyInstance) {
   fastify.post(
-    "/api/documents/batch",
+    "/documents/batch",
     {
       schema: {
         body: {
@@ -22,14 +21,9 @@ export async function documentRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { userIds } = request.body as { userIds: string[] };
-
-      // 1. deduplicate (important)
       const uniqueUserIds = [...new Set(userIds)];
-
-      // 2. create batchId
       const batchId = crypto.randomUUID();
 
-      // 3. simulate saving batch (MongoDB later)
       const batch = {
         batchId,
         status: "processing",
@@ -37,8 +31,10 @@ export async function documentRoutes(fastify: FastifyInstance) {
         createdAt: new Date().toISOString(),
       };
 
-      // 4. simulate queue (BullMQ later)
-      // fastify.queue.add(...) → plus tard
+      await fastify.documentQueue.add("generate", {
+        batchId,
+        userIds: uniqueUserIds,
+      });
 
       return reply.code(202).send({
         batchId,
