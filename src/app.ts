@@ -47,14 +47,9 @@ export async function createApp(): Promise<FastifyInstance> {
 
   // Register routes
   // Mount all application routes under a versioned API root.
-  // Use path-based versioning: register `routes/` under the `/api/v1` prefix.
-  await fastify.register(fastifyAutoload, {
-    dir: join(__dirname, "routes", "v1"),
-    dirNameRoutePrefix: false,
-    forceESM: true,
-    options: fastify.config,
-    prefix: "/api/v1",
-  });
+  // Use path-based versioning: register `routes/v1` under the `/api/v1` prefix.
+  const v1Routes = (await import("./routes/v1/index.js")).default;
+  await fastify.register(v1Routes, { prefix: "/api/v1" });
 
   // API root / health (mounted under versioned prefix)
   fastify.get(
