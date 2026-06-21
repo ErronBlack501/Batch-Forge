@@ -36,4 +36,10 @@ worker.on("completed", (job) => console.log(`Job ${job.id} completed`));
 worker.on("failed", (job, err) => console.error(`Job ${job?.id} failed:`, err));
 worker.on("error", (err) => console.error("Worker error", err));
 
+process.once("SIGINT", async () => {
+  await worker.close();
+  await connection.quit();
+  process.exit(0);
+});
+
 console.log("Document worker started and listening on queue: documents");
